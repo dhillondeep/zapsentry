@@ -7,24 +7,13 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
-	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 const (
 	maxBreadcrumbs = 1000
 	maxErrorDepth  = 10
-
-	zapSentryScopeKey = "_zapsentry_scope_"
 )
-
-func NewScope() zapcore.Field {
-	f := zap.Skip()
-	f.Interface = sentry.NewScope()
-	f.Key = zapSentryScopeKey
-
-	return f
-}
 
 func NewCore(cfg Configuration, factory SentryClientFactory) (zapcore.Core, error) {
 	client, err := factory()
@@ -75,6 +64,7 @@ func (c *core) Write(ent zapcore.Entry, fs []zapcore.Field) error {
 	// only when we have local sentryScope to avoid collecting all breadcrumbs ever in a global scope
 	if c.cfg.EnableBreadcrumbs && c.cfg.BreadcrumbLevel.Enabled(ent.Level) && c.sentryScope != nil {
 		breadcrumb := sentry.Breadcrumb{
+			Type:      string(sentrySeverity(ent.Level)),
 			Message:   ent.Message,
 			Data:      clone.fields,
 			Level:     sentrySeverity(ent.Level),
