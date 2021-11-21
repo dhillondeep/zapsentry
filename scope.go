@@ -25,6 +25,15 @@ func NewScope() *Scope {
 	return &Scope{sentry.NewScope()}
 }
 
+// FromScope adds scope provided to field
+func FromScope(scope *sentry.Scope) zapcore.Field {
+	f := zap.Skip()
+	f.Interface = scope
+	f.Key = zapSentryScopeKey
+
+	return f
+}
+
 // SetRequest sets the request on the underlying scope
 func (s *Scope) SetRequest(r *http.Request) *Scope {
 	s.scope.SetRequest(r)
